@@ -26,9 +26,12 @@ class APIClient:
     
     """
     
-    def __init__(self, base_url, auth):
+    def __init__(self, base_url, auth=None, headers=None, timeout=(30, 90), verify=True):
         self.base_url = base_url
         self.auth = auth
+        self.verify = verify
+        self.headers = headers
+        self.timeout = timeout
         self.session = self._init_session()
         
     def _init_session(self):
@@ -37,6 +40,9 @@ class APIClient:
         """
         session = requests.Session()
         session.auth = self.auth
+        session.verify = self.verify
+        if self.headers:
+            session.headers.update(self.headers)
         return session
     
     def get(self, path, params=None):
@@ -68,7 +74,7 @@ class APIClient:
         Performs a request to the api
         """
         url = self.base_url + path
-        response = self.session.request(method, url, **kwargs)
-        # We raise for status here to allow the specific client to handle the error
+        response = self.session.request(method, url, timeout=self.timeout, **kwargs)
+        # We raise for status here to allow the custom client to handle the error
         response.raise_for_status()
         return response
